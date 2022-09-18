@@ -18,7 +18,7 @@ class CountVectorizer:
         for i in s:
             i = i.lower()
             if ord('a') <= ord(i) <= ord('z') or ord('0') <= ord(i) <= ord('9') or i == ' ' or i == '_' or ord(
-                'а') <= ord(i) <= ord('я'):
+                    'а') <= ord(i) <= ord('я'):
                 pass
             else:
                 s = s.replace(i, ' ')
@@ -95,7 +95,6 @@ if __name__ == '__main__':
     import warnings
     from sklearn.feature_extraction.text import CountVectorizer as SKCountVectorizer
 
-
     warnings.filterwarnings("ignore")
 
     fp = open(r'wp.txt', mode='r', buffering=-1, encoding=None,
@@ -104,12 +103,7 @@ if __name__ == '__main__':
 
     v = CountVectorizer()
 
-
-
     skv = SKCountVectorizer()
-
-
-
 
     diff_el_matrix = np.sum(np.array(skv.fit_transform(wp[:1000]).toarray()) != np.array(v.fit_transform(wp[:1000])))
     print(
@@ -122,7 +116,6 @@ if __name__ == '__main__':
         print('Result of our realization is equal to realization in sklearn!')
     else:
         print('result of our realization is NOT equal to realization in sklearn!')
-
 
     print('--------------------------------')
     start = time.time()
