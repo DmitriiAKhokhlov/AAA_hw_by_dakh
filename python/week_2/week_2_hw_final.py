@@ -15,7 +15,7 @@ class CountVectorizer:
     @staticmethod
     def _prepare_str(string):
         """
-        :param s: string
+        :param string: some string
         :return: the same string that is lowered.
         All chars, unequal to eng/rus letters or numbers or '_' are replaced by spaces
         """
@@ -36,7 +36,7 @@ class CountVectorizer:
     @staticmethod
     def _prepare_corpus(corpus):
         """
-        :param corp: initial corpus
+        :param corpus: initial corpus
         :return: Apply _prepare_str method to each string in corpus and split each string to list of words
         """
         # Use numpy for speedup
