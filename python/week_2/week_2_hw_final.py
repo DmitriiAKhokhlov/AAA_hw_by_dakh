@@ -1,7 +1,6 @@
 from numba import njit
 import numba
 import numpy as np
-import time
 
 
 class CountVectorizer:
@@ -10,79 +9,111 @@ class CountVectorizer:
 
     def __init__(self):
         self.unique_words = None
-        self.corpus = None
+        self.prepared_corpus = None
+        self.unique_words = None
 
     @staticmethod
-    def _only_letters(s):
-        """Leave only eng letters in the argument string. Lower all letters."""
-        for i in s:
-            i = i.lower()
-            if ord('a') <= ord(i) <= ord('z') or ord('0') <= ord(i) <= ord('9') or i == ' ' or i == '_' or ord(
-                    'а') <= ord(i) <= ord('я'):
+    def _prepare_str(string):
+        """
+        :param s: string
+        :return: the same string that is lowered.
+        All chars, unequal to eng/rus letters or numbers or '_' are replaced by spaces
+        """
+        for char in string:
+            char = char.lower()
+            # Hard to read conditions below works faster than create set of allowed chars
+            # and check if char stay in this set
+            if ord('a') <= ord(char) <= ord('z') or ord('0') <= ord(char) <= ord('9') or char == ' ' or \
+                    char == '_' or ord('а') <= ord(char) <= ord('я'):
                 pass
             else:
-                s = s.replace(i, ' ')
-        while '  ' in s:
-            s = s.replace('  ', ' ')
-        return s
+                string = string.replace(char, ' ')
+        # Remove double spaces
+        while '  ' in string:
+            string = string.replace('  ', ' ')
+        return string.lower()
 
     @staticmethod
-    def _prepare_corpus(self, corp):
-        """Apply _only_letters method to each string in corpus and split each string to list of words"""
-        ans = np.array([self._only_letters(i) for i in np.array(corp)])
-        ans = np.char.lower(ans)
+    def _prepare_corpus(corpus):
+        """
+        :param corp: initial corpus
+        :return: Apply _prepare_str method to each string in corpus and split each string to list of words
+        """
+        # Use numpy for speedup
+        ans = np.array([CountVectorizer._prepare_str(string) for string in np.array(corpus)])
         return list(np.char.split(ans))
 
-    @staticmethod
-    def _unique_w(self, corpus):
-        """Create list of unique words from corpus"""
-        s = list(set(list(np.concatenate(list(self._prepare_corpus(self, corpus))).flat)))
-        s.sort()
-        return [i for i in s if len(i) > 1]
+    def _unique_words(self, corpus):
+        """
+        :param Corpus: prepared corpus
+        :return: Unique words of len > 1 from prepared corpus
+        """
+        # 1. Transform _prepare_corpus(corpus) that is 2D list of words to 1D list
+        # 2. Apply set() to leave only unique words
+        # 3. Apply list to make list for further sort()
+        self.prepared_corpus = CountVectorizer._prepare_corpus(corpus)
+        uword_list = list(set(np.concatenate(self.prepared_corpus)))
+        uword_list.sort()
+        return [word for word in uword_list if len(word) > 1]
 
     def get_feature_names(self):
-        """Create set of words in the corpus."""
-        return self._unique_w(self, self.corpus)
+        """
+        :return: Unique words of len > 1 from prepared corpus
+        """
+        return self.unique_words
 
     @staticmethod
     @njit
-    def mat(s, corp):
-        """Here we use numba to speedup matrix creation. We treat this operation as a static method
-        because it is easier to apply numba only for one function.
-        1. Create a dict where key is a unique word and value is a number of the word. 2. Create
-        zero term-doc matrix 3. take a word from the corpus_prepared_str_to_list, find it in the dict and add one to
-        the corresponding element of the matrix. """
+    def term_doc_matrix(uword_list, corpus):
+        """
+        :param  uword_list: _unique_words(corpus)
+        :param corpus: prepared corpus
+        :return: term-doc matrix
+        Here we use numba to speedup matrix creation. We treat this operation as a static method
+        because it is easier to apply numba only for one function rather than to all class. Below you can see steps
+        1. Create a dict where key is a unique word and value is a number of the word. We have to use loop
+        because numba does not support python dicts
+        2. Create zero term-doc matrix
+        3. Take a word from the corpus_prepared_str_to_list, find it in the dict and add 1 to
+        the corresponding element of the matrix."""
 
         k = 0
-        unique_words = {}
-        for i in s:
-            if len(i) > 1:
-                unique_words[i] = k
-                k = k + 1
+        uwords_dict = {}
+        for i in uword_list:
+            uwords_dict[i] = k
+            k = k + 1
 
-        matrix = [[0] * len(unique_words)] * len(corp)
+        matrix = [[0] * len(uwords_dict)] * len(corpus)
         matrix = np.array(matrix)
 
-        for j in range(len(corp)):
-            for i in range(len(corp[j])):
-                if len(corp[j][i]) > 1:
-                    matrix[j, unique_words[corp[j][i]]] += 1
+        for j in range(len(corpus)):
+            for i in range(len(corpus[j])):
+                if len(corpus[j][i]) > 1:
+                    matrix[j, uwords_dict[corpus[j][i]]] += 1
         return matrix
 
     def fit_transform(self, corpus):
-        """ Here we calculate term-doc matrix"""
-        self.corpus = corpus
-        s = self._unique_w(self, corpus)
+        """
+        :param corpus: prepared corpus
+        :return: term-doc matrix
+        1. We need this method to call term_doc_matrix that is @static method on @njit.
+           Also, we convert required data to numba data type here
+        2. We create nb_corpus that is numba 2D list
+        3. We apply term_doc_matrix and get answer
+        """
+        self.unique_words = self._unique_words(corpus)
+        nb_corpus = numba.typed.List()
 
-        co = self._prepare_corpus(self, corpus)
-        nb_co = numba.typed.List()
-        for lst in co:
-            if len(lst) == 0:
-                nb_co.append([''])
-            else:
-                nb_co.append(lst)
+        [nb_corpus.append(['']) if len(lst) == 0 else nb_corpus.append(lst)
+         for lst in self.prepared_corpus]
 
-        return self.mat(s, nb_co)
+        # for lst in CountVectorizer._prepare_corpus(corpus):
+        #     if len(lst) == 0:
+        #         nb_corpus.append([''])
+        #     else:
+        #         nb_corpus.append(lst)
+
+        return self.term_doc_matrix(self.unique_words, nb_corpus)
 
 
 # Below we provide a test. The first is accuracy test.
@@ -93,9 +124,10 @@ class CountVectorizer:
 # Further we provide speed test. We compare time of creating term-doc matrix via our class and sklearn realization.
 if __name__ == '__main__':
     import warnings
+    import time
     from sklearn.feature_extraction.text import CountVectorizer as SKCountVectorizer
 
-    warnings.filterwarnings("ignore")
+    warnings.filterwarnings('ignore')
 
     fp = open(r'wp.txt', mode='r', buffering=-1, encoding=None,
               errors=None, newline=None, closefd=True, opener=None)
