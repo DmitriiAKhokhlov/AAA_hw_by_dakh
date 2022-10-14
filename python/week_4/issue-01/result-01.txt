@@ -1,0 +1,40 @@
+Trying:
+    try:
+        encode('sos') == '... --- ...'
+    except AssertionError:
+        print('Low register in not permitted!')
+        pass
+Expecting nothing
+**********************************************************************
+File "C:\Users\mitkh\AAA\AAA_hw\AAA_hw_by_dakh\python\week_4\week_4_hw\issue-01.py", line 31, in issue-01.encode
+Failed example:
+    try:
+        encode('sos') == '... --- ...'
+    except AssertionError:
+        print('Low register in not permitted!')
+        pass
+Exception raised:
+    Traceback (most recent call last):
+      File "C:\Python37\lib\doctest.py", line 1350, in __run
+        exec(compile(example.source, filename, "single",
+      File "<doctest issue-01.encode[0]>", line 2, in <module>
+        encode('sos') == '... --- ...'
+      File "C:\Users\mitkh\AAA\AAA_hw\AAA_hw_by_dakh\python\week_4\week_4_hw\issue-01.py", line 41, in encode
+        encoded_signs = [
+      File "C:\Users\mitkh\AAA\AAA_hw\AAA_hw_by_dakh\python\week_4\week_4_hw\issue-01.py", line 42, in <listcomp>
+        LETTER_TO_MORSE[letter] for letter in message
+    KeyError: 's'
+Trying:
+    encode('SOS') #doctest: +ELLIPSIS
+Expecting:
+    '... --- ...'
+ok
+2 items had no tests:
+    issue-01
+    issue-01.decode
+**********************************************************************
+1 items had failures:
+   1 of   2 in issue-01.encode
+2 tests in 3 items.
+1 passed and 1 failed.
+***Test Failed*** 1 failures.

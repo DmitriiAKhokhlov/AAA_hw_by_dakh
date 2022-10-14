@@ -45,6 +45,7 @@ class Advert(ColorizeMixin, DotDict):
             else:
                 return self.data['price']
 
+
     def dotdict_to_attr(self):
         data_dot = self.py_to_dotdict(self.data)
         for key in data_dot:
