@@ -1,0 +1,8 @@
+PS C:\Users\mitkh\AAA\AAA_hw\AAA_hw_by_dakh\python\week_4\issue-05> coverage run -m unittest -q issue-05_test.py
+----------------------------------------------------------------------
+Ran 3 tests in 0.005s
+
+OK
+PS C:\Users\mitkh\AAA\AAA_hw\AAA_hw_by_dakh\python\week_4\issue-05> coverage html
+Wrote HTML report to htmlcov\index.html
+PS C:\Users\mitkh\AAA\AAA_hw\AAA_hw_by_dakh\python\week_4\issue-05> 

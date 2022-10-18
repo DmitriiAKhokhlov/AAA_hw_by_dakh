@@ -13,6 +13,7 @@ DMY_SEP_INDEX = 5
 DMY_YEAR_SLICE = slice(DMY_SEP_INDEX + 1, DMY_SEP_INDEX + 5)
 
 
+
 def what_is_year_now() -> int:
     """
     Получает текущее время из API-worldclock и извлекает из поля 'currentDateTime' год
@@ -21,8 +22,8 @@ def what_is_year_now() -> int:
       * DD.MM.YYYY - 01.03.2019
     """
     with urllib.request.urlopen(API_URL) as resp:
-        #resp_json = json.load(resp)
-        return resp
+        resp_json = json.load(resp)
+
     datetime_str = resp_json['currentDateTime']
     if datetime_str[YMD_SEP_INDEX] == YMD_SEP:
         year_str = datetime_str[YMD_YEAR_SLICE]
@@ -32,11 +33,3 @@ def what_is_year_now() -> int:
         raise ValueError('Invalid format')
 
     return int(year_str)
-
-
-if __name__ == '__main__':
-    year = what_is_year_now()
-    exp_year = 2019
-
-    print(year)
-    assert year == exp_year
